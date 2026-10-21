@@ -1,0 +1,4 @@
+.DS_Store
+# data, která vznikají za provozu formuláře
+api/storage/rate/
+api/storage/outbox/

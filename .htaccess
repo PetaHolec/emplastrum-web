@@ -1,0 +1,54 @@
+# Emplastrum Design – nastavení Apache (sdílený hosting). Pro místní náhled ve VS Code se nepoužívá.
+Options -Indexes
+DirectoryIndex index.html
+ErrorDocument 404 /404.html
+AddDefaultCharset UTF-8
+AddType image/avif .avif
+AddType image/webp .webp
+AddType font/woff2 .woff2
+AddType video/mp4 .mp4
+AddType image/svg+xml .svg
+
+<IfModule mod_rewrite.c>
+RewriteEngine On
+# Po nasazení na ostrou doménu odkomentujte vynucení HTTPS:
+# RewriteCond %{HTTPS} off
+# RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Odkazy v kódu míří na .../index.html (aby fungoval i dvojklik na soubor); návštěvníkům ukážeme čistou adresu .../
+RewriteCond %{THE_REQUEST} s/+(.*?)index.html[s?] [NC]
+RewriteRule ^ /%1 [R=301,L]
+</IfModule>
+
+# Staré adresy dosavadního webu → nové (zachování odkazů a SEO)
+<IfModule mod_alias.c>
+RedirectMatch 301 ^/o-nas/?$ /o-firme/
+RedirectMatch 301 ^/sluzby/?$ /povrchy/
+RedirectMatch 301 ^/betonove-sterky/?$ /povrchy/betonove-sterky/
+RedirectMatch 301 ^/epoxidove-podlahy/?$ /povrchy/epoxidove-podlahy/
+RedirectMatch 301 ^/polyuretanove-podlahy/?$ /povrchy/polyuretanove-podlahy/
+RedirectMatch 301 ^/galerie/?$ /realizace/
+RedirectMatch 301 ^/workshop/?$ /workshopy/
+RedirectMatch 301 ^/blog/?$ /povrchy/
+RedirectMatch 301 ^/betonova-sterka-do-koupelny-co-zvladne-jak-se-udrzuje-a-proc-ji-zvolit/?$ /povrchy/betonove-sterky/#koupelna
+RedirectMatch 301 ^/epoxidova-nebo-polyuretanova-podlaha-hlavni-rozdily-a-vhodne-pouziti/?$ /povrchy/#srovnani
+RedirectMatch 301 ^/epoxidova-podlaha-do-garaze-co-vydrzi-a-jak-probiha-realizace/?$ /povrchy/epoxidove-podlahy/
+RedirectMatch 301 ^/jan-novak/?$ /
+RedirectMatch 301 ^/eva-matuskova/?$ /
+RedirectMatch 301 ^/zpracovani-osobnich-udaju/?$ /ochrana-udaju/
+RedirectMatch 301 ^/politika-k-souborum-cookies/?$ /ochrana-udaju/
+</IfModule>
+
+<IfModule mod_deflate.c>
+AddOutputFilterByType DEFLATE text/html text/css application/javascript text/javascript application/json image/svg+xml application/xml
+</IfModule>
+
+<IfModule mod_headers.c>
+Header always set X-Content-Type-Options "nosniff"
+Header always set Referrer-Policy "strict-origin-when-cross-origin"
+Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'sha256-FsDEIX2NghFohcYdqITfQH/2js1mgO9Lt3mbIBdQ+7A='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; media-src 'self'; connect-src 'self'; frame-src https://www.google.com https://maps.google.com; form-action 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'"
+<FilesMatch "\.(html|xml|txt)$">
+Header set Cache-Control "no-cache"
+</FilesMatch>
+</IfModule>
