@@ -2,3 +2,7 @@
 # data, která vznikají za provozu formuláře
 api/storage/rate/
 api/storage/outbox/
+# blog: přístupové údaje a klíč pro první nastavení hesla (jen na hostingu, nikdy do gitu)
+blog/data/auth.php
+blog/data/setup-key.php
+blog/data/login-attempts.php

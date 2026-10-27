@@ -1,0 +1,8 @@
+# Do složky se nahrávají jen obrázky – nic se tu nesmí spouštět jako skript
+<IfModule mod_php.c>
+php_flag engine off
+</IfModule>
+<FilesMatch "\.(php|phtml|phar|cgi|pl|py|sh|htaccess)$">
+Require all denied
+</FilesMatch>
+RemoveHandler .php .phtml .phar
