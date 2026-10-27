@@ -44,6 +44,13 @@ function login_failed(bool $reset = false): void {
 
 $action = (string)($_POST['action'] ?? '');
 
+// Příliš velký požadavek (např. obří fotka): PHP zahodí celý formulář. Místo tichého
+// vyprázdnění editoru to návštěvníkovi srozumitelně řekneme.
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$_POST && (int)($_SERVER['CONTENT_LENGTH'] ?? 0) > 0) {
+    flash('Odeslaná data jsou pro server příliš velká (nejvýše ' . ini_get('post_max_size') . 'B). Zkuste menší fotku – text článku prosím zkopírujte znovu.', 'err');
+    redirect(isset($_GET['edit']) ? '?edit=' . rawurlencode((string)$_GET['edit']) : '');
+}
+
 // ------------------------------------------------------------------ první nastavení hesla
 if (!$auth) {
     $err = '';
@@ -151,6 +158,7 @@ if ($action === 'save') {
         'cover_alt' => trim(mb_substr((string)($_POST['cover_alt'] ?? ''), 0, 200)),
         'content' => $content,
         'published' => !empty($_POST['published']),
+        'created' => $old['created'] ?? date('c'),
         'updated' => date('c'),
     ];
     if ($errors) {

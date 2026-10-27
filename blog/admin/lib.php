@@ -37,8 +37,14 @@ function write_data(string $name, $data): void {
 
 function load_posts(): array { return read_data('posts', []); }
 
+// Pořadí: nejnovější datum vydání první; při stejném datu ten, který byl přidán později.
+function sort_posts(array $posts): array {
+    usort($posts, fn($a, $b) => strcmp($b['date'] . ($b['created'] ?? ''), $a['date'] . ($a['created'] ?? '')));
+    return $posts;
+}
+
 function save_posts(array $posts): void {
-    usort($posts, fn($a, $b) => strcmp($b['date'] . $b['id'], $a['date'] . $a['id']));
+    $posts = sort_posts($posts);
     write_data('posts', array_values($posts));
 }
 
@@ -162,8 +168,10 @@ function plain_text(string $html, int $len = 160): string {
 // ------------------------------------------------------------------ obrázky
 // Nahraný obrázek se zmenší (max. 1800 px) a uloží jako WebP, pokud to hosting umí; jinak beze změny.
 function store_upload(array $file): array {
-    if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) return ['error' => 'Obrázek se nepodařilo nahrát (maximum je 10 MB).'];
-    if ((int)$file['size'] > 10 * 1024 * 1024) return ['error' => 'Obrázek je větší než 10 MB.'];
+    $err = $file['error'] ?? UPLOAD_ERR_NO_FILE;
+    if (in_array($err, [UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE], true)) return ['error' => 'Obrázek je pro server příliš velký (nejvýše ' . ini_get('upload_max_filesize') . 'B). Zkuste menší fotku.'];
+    if ($err !== UPLOAD_ERR_OK) return ['error' => 'Obrázek se nepodařilo nahrát. Zkuste to znovu.'];
+    if ((int)$file['size'] > 25 * 1024 * 1024) return ['error' => 'Obrázek je větší než 25 MB.'];
     $tmp = (string)$file['tmp_name'];
     if (!is_uploaded_file($tmp) && PHP_SAPI !== 'cli') return ['error' => 'Neplatný soubor.'];
     $info = @getimagesize($tmp);
@@ -224,13 +232,17 @@ function arrow(): string {
     return '<svg class="btn__arrow" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true" focusable="false"><path d="M3 12h17M14 5.5 20.5 12 14 18.5"/></svg>';
 }
 
-function card(array $p, string $prefix, bool $big = false): string {
-    $img = '';
+function card(array $p, string $prefix): string {
+    // článek bez úvodní fotky dostane texturu stěrky, aby byly všechny karty stejně velké
     if (!empty($p['cover'])) {
         [$w, $hh] = image_size($p['cover']);
-        $img = '<span class="blog-card__media"><img src="' . h($prefix . 'uploads/' . $p['cover']) . '" width="' . $w . '" height="' . $hh . '" alt="" loading="lazy" decoding="async"></span>';
+        $src = $prefix . 'uploads/' . $p['cover'];
+    } else {
+        [$w, $hh] = [960, 960];
+        $src = $prefix . '../assets/img/showroom-textura-22985e-960.webp';
     }
-    return '<article class="blog-card' . ($big ? ' blog-card--big' : '') . '" data-reveal><a class="blog-card__link" href="' . h($prefix . $p['slug'] . '/index.html') . '">' . $img
+    $img = '<span class="blog-card__media"><img src="' . h($src) . '" width="' . $w . '" height="' . $hh . '" alt="" loading="lazy" decoding="async"></span>';
+    return '<article class="blog-card" data-reveal><a class="blog-card__link" href="' . h($prefix . $p['slug'] . '/index.html') . '">' . $img
         . '<span class="blog-card__body"><time class="blog-card__date" datetime="' . h($p['date']) . '">' . h(cz_date($p['date'])) . '</time>'
         . '<span class="blog-card__title">' . h($p['title']) . '</span>'
         . '<span class="blog-card__text">' . h($p['perex']) . '</span>'
@@ -247,7 +259,7 @@ function render_index(array $published): string {
         $main .= '<section class="section--tight" style="padding-top:0"><div class="container"><p class="lede">Připravujeme první články.</p></div></section>';
     } else {
         $cards = '';
-        foreach ($published as $i => $p) $cards .= card($p, '', $i === 0);
+        foreach ($published as $p) $cards .= card($p, '');
         $main .= '<section class="section--tight blog-list" style="padding-top:0"><div class="container"><div class="blog-grid">' . $cards . '</div></div></section>';
     }
     return fill(shell(), [
@@ -324,7 +336,7 @@ function build_all(): array {
     $warn = [];
     $posts = load_posts();
     $published = array_values(array_filter($posts, fn($p) => !empty($p['published'])));
-    usort($published, fn($a, $b) => strcmp($b['date'] . $b['id'], $a['date'] . $a['id']));
+    $published = sort_posts($published);
 
     // smazat složky článků, které už nejsou zveřejněné nebo změnily adresu
     $keep = array_map(fn($p) => $p['slug'], $published);
