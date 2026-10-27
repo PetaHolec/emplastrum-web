@@ -526,3 +526,13 @@ main > :first-child:not(.hero):not(.page-band):not(.hero-walk) { margin-top: cal
 .blog-cta__t { font-family: var(--font-display); font-size: clamp(1.4rem, 1.1rem + 1vw, 2rem); letter-spacing: -0.03em; color: var(--fg); }
 .blog-cta p:not(.blog-cta__t) { color: var(--fg-2); }
 .blog-more .h2 { margin-bottom: clamp(24px, 3vw, 40px); }
+
+/* prohlídka nezachytává kolečko myši ani posun prstem – ovládání až po kliknutí (cinematic.js) */
+.tour__activate { display: none; }
+.js .tour__frame iframe { pointer-events: none; }
+.js .tour__frame.is-active iframe { pointer-events: auto; }
+.js .tour__activate { position: absolute; inset: 0; z-index: 2; display: flex; align-items: flex-end; justify-content: center; padding: 0 16px clamp(16px, 3vw, 32px); border: 0; background: linear-gradient(to top, rgba(11, 10, 9, 0.6), rgba(11, 10, 9, 0) 45%); cursor: pointer; transition: opacity 300ms var(--ease-out); }
+.js .tour__frame.is-active .tour__activate { opacity: 0; pointer-events: none; }
+.tour__activate-pill { display: inline-flex; align-items: center; gap: 10px; padding: 12px 20px; border-radius: 999px; background: rgba(14, 13, 11, 0.78); border: 1px solid var(--glass-line); color: #fff; font: 600 0.92rem/1.2 var(--font-text); transition: background-color 200ms var(--ease-out), color 200ms var(--ease-out), transform 260ms var(--ease-expo); }
+.tour__activate-pill svg { width: 18px; height: 18px; color: var(--accent); }
+@media (hover: hover) and (pointer: fine) { .tour__activate:hover .tour__activate-pill { background: #f3eee4; color: #14120f; transform: translateY(-2px); } .tour__activate:hover .tour__activate-pill svg { color: #8a6d0b; } }

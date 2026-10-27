@@ -83,6 +83,25 @@
     });
   }
 
+  // --- virtuální prohlídka: dokud na ni návštěvník neklikne, nechytá kolečko myši ani posun
+  //     prstem (stránka se přes ni normálně posouvá). Po odjetí myší / odscrollování se zase zamkne.
+  function initTour() {
+    each(document.querySelectorAll('[data-tour]'), function (box) {
+      var btn = box.querySelector('[data-tour-on]');
+      if (!btn) return;
+      var lock = function () { box.classList.remove('is-active'); };
+      btn.addEventListener('click', function () {
+        box.classList.add('is-active');
+        var f = box.querySelector('iframe');
+        if (f) f.focus();
+      });
+      box.addEventListener('mouseleave', lock);
+      if ('IntersectionObserver' in window) {
+        new IntersectionObserver(function (en) { if (!en[0].isIntersecting) lock(); }, { threshold: 0 }).observe(box);
+      }
+    });
+  }
+
   // --- světlo sleduje kurzor na kartách
   function initSpot() {
     if (!window.matchMedia || !matchMedia('(hover: hover) and (pointer: fine)').matches) return;
@@ -267,6 +286,7 @@
     run(initSplit);
     run(addBits);
     run(initFadeIn);
+    run(initTour);
     run(initSpot);
     run(initScroll);
   }
